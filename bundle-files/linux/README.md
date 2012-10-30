@@ -28,8 +28,7 @@ the same version you will want to rename this.
 
 Usage
 -----
-
-# Starting, Stopping, Restarting
+### Starting, Stopping, Restarting ###
 
 To start Tomcat and MySQL, type the following at the command line
 
@@ -49,7 +48,7 @@ To restart Tomcat and MySQL, use the following command
 
     ./alfresco.sh restart
 
-# Debugging
+### Debugging ###
 
 To start Tomcat in debug mode using JPDA, use the following
 
@@ -59,7 +58,7 @@ Or to start MySQL as well, use
 
     ./alfresco.sh start-jpda
 
-# Installing Solr
+### Installing Solr ###
 
 The `install-solr.sh` script in the `bin` directory can be used to install Solr
 support into the installation.
@@ -75,7 +74,7 @@ Or from another directory,
 The Solr ZIP file can be downloaded from the Alfresco web site and must match
 the version of your Alfresco installation.
 
-# Installing AMP files
+### Installing AMP files ###
 
 AMP files can be installed into the repository or Share WAR files by placing them 
 into the appropriate subdirectory in the `amps` directory. Then, use the following

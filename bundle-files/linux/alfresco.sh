@@ -22,6 +22,7 @@ cd "${ALF_HOME}"
 
 # Installation directories
 TOMCAT_HOME="${ALF_HOME}/tomcat"
+TOMCAT_APP_HOME="${ALF_HOME}/tomcat-app"
 ALF_DATA_HOME="${ALF_HOME}/data"
 MYSQL_DATA_DIR="${ALF_DATA_HOME}/mysql"
 SOLR_HOME="${ALF_DATA_HOME}/solr"
@@ -40,7 +41,7 @@ export JAVA_OPTS='-Xms512m -Xmx1024m -Xss1024k -XX:MaxPermSize=256m -XX:NewSize=
 export JAVA_OPTS="${JAVA_OPTS} -Dalfresco.home=${ALF_HOME} -Dcom.sun.management.jmxremote=true"
 export JAVA_OPTS="${JAVA_OPTS} -Ddir.root=${ALF_DATA_HOME}"
 export JAVA_OPTS="${JAVA_OPTS} -Dooo.user=${ALF_DATA_HOME}"
-test -d "$SOLR_HOME" && export JAVA_OPTS="${JAVA_OPTS} -Dindex.subsystem.name=solr -Ddir.keystore=\${dir.root}/keystore -Dsun.security.ssl.allowUnsafeRenegotiation=true"
+test -d "$SOLR_HOME" && export JAVA_OPTS="${JAVA_OPTS} -Dindex.subsystem.name=solr -Ddir.keystore=\\\${dir.root}/keystore -Dsun.security.ssl.allowUnsafeRenegotiation=true"
 export JAVA_OPTS="${JAVA_OPTS} ${ALFRESCO_OPTS}"
 
 # Set database properties
@@ -65,7 +66,7 @@ function start_all {
     mysql_start
   fi
   echo "Starting Tomcat"
-  tomcat_start
+  tomcat_start "$@"
 }
 
 # Stop Tomcat and MySQL if running
@@ -106,7 +107,9 @@ function tomcat_start {
     fi
   fi
   if [ ! -e "$CATALINA_PID" ]; then
-    sh -c "${TOMCAT_HOME}/bin/catalina.sh start"
+    catalina_opts="start"
+    test "$1" = "jpda" && catalina_opts="jpda start"
+    sh -c "${TOMCAT_HOME}/bin/catalina.sh $catalina_opts"
   else
     echo "Tomcat is already started"
   fi
@@ -162,22 +165,23 @@ function tomcat_stop {
 
   PID=`cat $CATALINA_PID`
 
-  sh -c "${TOMCAT_HOME}/bin/catalina.sh stop"
+  sh -c "${TOMCAT_HOME}/bin/catalina.sh stop 20 -force"
 
   # Wait 10s
-  COUNTER=0
-  while [ $COUNTER -lt 10 ]; do
-    if [ ! -z "`ps -p $PID -o comm=`" ]; then
-      sleep 1
-      #echo "Waiting for Tomcat process to exit ($COUNTER)"
-    fi
-    let COUNTER=COUNTER+1
-  done
+  if [ -f "$CATALINA_PID" ]; then
+     COUNTER=0
+     while [ $COUNTER -lt 10 ]; do
+       if [ ! -z "`ps -p $PID -o comm=`" ]; then
+         sleep 1
+       fi
+       let COUNTER=COUNTER+1
+     done
 
-  # Kill the process
-  if [ ! -z "`ps -p $PID -o comm=`" ]; then
-     echo "Killing Tomcat process: $PID"
-     kill -9 $PID
+     # Kill the process
+     if [ ! -z "`ps -p $PID -o comm=`" ]; then
+        echo "Killing Tomcat process: $PID"
+        kill -9 $PID
+     fi
   fi
 
   # Remove the PID file if it still exists
@@ -215,7 +219,14 @@ function install_amps {
   INSTALLED_AMPS=0
   for f in `find "${ALF_HOME}/amps/$1" -name "*.amp"`; do
     echo "Installing AMP file \"$f\""
-    java -jar "${ALF_HOME}/bin/alfresco-mmt.jar" install "$f" "${TOMCAT_HOME}/webapps/$1.war" -force
+    if [ -f "${TOMCAT_HOME}/webapps/$1.war" ]; then
+      java -jar "${ALF_HOME}/bin/alfresco-mmt.jar" install "$f" "${TOMCAT_HOME}/webapps/$1.war"
+    elif [ -f "${TOMCAT_APP_HOME}/webapps/$1.war" ]; then
+      java -jar "${ALF_HOME}/bin/alfresco-mmt.jar" install "$f" "${TOMCAT_APP_HOME}/webapps/$1.war"
+    else
+      echo "Could not find WAR file $1"
+      exit 1
+    fi
     let INSTALLED_AMPS=INSTALLED_AMPS+1
     mv "$f" "$f.installed"
   done
@@ -236,25 +247,32 @@ function install_amps {
 
 if [ "$1" = "start" ]; then
   start_all
-elif [ "$1" = "start_tomcat" ]; then
+elif [ "$1" = "start-jpda" ]; then
+  start_all jpda
+elif [ "$1" = "start-tomcat" ]; then
   tomcat_start
-elif [ "$1" = "start_mysql" ]; then
+elif [ "$1" = "start-tomcat-jpda" ]; then
+  tomcat_start jpda
+elif [ "$1" = "start-mysql" ]; then
   mysql_start
 elif [ "$1" = "stop" ]; then
   stop_all
-elif [ "$1" = "stop_tomcat" ]; then
+elif [ "$1" = "stop-tomcat" ]; then
   tomcat_stop
-elif [ "$1" = "stop_mysql" ]; then
+elif [ "$1" = "stop-mysql" ]; then
   mysql_stop
 elif [ "$1" = "restart" ]; then
   restart_all
-elif [ "$1" = "install_amps" ]; then
+elif [ "$1" = "restart-tomcat" ]; then
+  tomcat_stop
+  tomcat_start
+elif [ "$1" = "install_amps" -o "$1" = "install-amps" ]; then
   install_amps alfresco
   install_amps share
-elif [ "$1" = "install_amps_alfresco" ]; then
+elif [ "$1" = "install-amps-alfresco" ]; then
   install_amps alfresco
-elif [ "$1" = "install_amps_share" ]; then
+elif [ "$1" = "install-amps-share" ]; then
   install_amps share
 else
-  echo "Usage: alfresco.sh start|stop|restart"
+  echo "Usage: $0 start|stop|restart|install-amps|start-jpda|start-tomcat|start-tomcat-jpda|start-mysql|stop-tomcat|stop-mysql|restart-tomcat"
 fi

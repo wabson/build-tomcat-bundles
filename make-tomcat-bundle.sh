@@ -3,13 +3,39 @@
 # Alfresco Linux Tomcat bundle build script
 # Author: Will Abson
 
-if [ "$1" == "-h" ]; then
+tomcat_version=7.0.32
+mysql_version=5.5.28
+
+function usage {
   echo "Usage: make-tomcat-bundle.sh source target platform"
+}
+
+if [ "$1" == "-h" ]; then
+  usage
   exit
 fi
 
 if [ -z "$1" ]; then
-  echo "Must specify a target package name"
+  echo "Must specify a source package"
+  usage
+  exit 1
+fi
+
+if [ -z "$2" ]; then
+  echo "Must specify a target package"
+  usage
+  exit 1
+fi
+
+if [ -z "$3" ]; then
+  echo "Must specify a target platform"
+  usage
+  exit 1
+fi
+
+if [ "$3" != "win32" -a "$3" != "linux" -a "$3" != "osx" ]; then
+  echo "Target platform must be one of win32, linux or osx"
+  usage
   exit 1
 fi
 
@@ -18,22 +44,25 @@ WAR_PKG="$1"
 PLATFORM="$3"
 test -z "$PLATFORM" && PLATFORM="linux"
 TEMP_DIR="tomcat-bundle-`date +%s`"
-BUNDLE_NAME="`echo $BUNDLE_PKG | sed -e 's/\\.tar\\.gz$//' -e 's/\\.zip$//'`"
+BUNDLE_NAME="`echo $WAR_PKG | sed -e 's/\\.tar\\.gz$//' -e 's/\\.zip$//'`"
+BUNDLE_NAME=`basename "$BUNDLE_NAME"`
 BUNDLE_DIR="${TEMP_DIR}/${BUNDLE_NAME}"
 #WAR_PKG="`echo $BUNDLE_NAME | sed -e 's/\\-tomcat//'`.zip"
-TOMCAT_PKG_TAR="apache-tomcat-6.0.29.tar.gz"
-TOMCAT_PKG_ZIP="apache-tomcat-6.0.29.zip"
+TOMCAT_PKG_TAR="apache-tomcat-$tomcat_version.tar.gz"
+TOMCAT_PKG_ZIP="apache-tomcat-$tomcat_version.zip"
 # Pre-4.0
 #MYSQL_PKG_LINUX="mysql-5.1.59-linux-i686-glibc23.tar.gz"
 #MYSQL_PKG_WINDOWS="mysql-noinstall-5.1.59-win32.zip"
 # For 4.0
 if [ "$PLATFORM" == "linux" ]; then
-  MYSQL_PKG_LINUX="mysql-5.5.16-linux2.6-i686.tar.gz"
+  MYSQL_PKG_LINUX="mysql-$mysql_version-linux2.6-i686.tar.gz"
 elif [ "$PLATFORM" == "osx" ]; then
-  MYSQL_PKG_LINUX="mysql-5.5.25-osx10.6-x86_64.tar.gz"
+  MYSQL_PKG_LINUX="mysql-$mysql_version-osx10.6-x86_64.tar.gz"
 fi
-MYSQL_PKG_WINDOWS="mysql-5.5.16-win32.zip"
-MYSQL_FILES_WINDOWS="*/bin/libmysql.dll */bin/mysql.exe */bin/mysqladmin.exe */bin/mysqld.exe */data/* */share/* */COPYING */EXCEPTIONS-CLIENT"
+MYSQL_PKG_WINDOWS="mysql-$mysql_version-win32.zip"
+#MYSQL_FILES_WINDOWS="*/bin/libmysql.dll */bin/mysql.exe */bin/mysqladmin.exe */bin/mysqld.exe */data/* */share/* */COPYING */EXCEPTIONS-CLIENT"
+# In MySQL 5.5.28 files have changed
+MYSQL_FILES_WINDOWS="*/lib/libmysql.dll */bin/mysql.exe */bin/mysqladmin.exe */bin/mysqld.exe */data/* */share/* */COPYING"
 ALF_SCRIPT="/usr/local/bin/alfresco.sh"
 
 if [ -e "${BUNDLE_DIR}" ]; then
@@ -56,7 +85,7 @@ mkdir -p "${BUNDLE_DIR}"
 
 # Extract files from WAR bundle
 echo "Extracting files from WAR bundle ${WAR_PKG}"
-unzip -q "${WAR_PKG}" "bin/alfresco-mmt.jar" "licenses/*" "web-server/*" "README.txt" -d "${BUNDLE_DIR}"
+unzip -q "${WAR_PKG}" "bin/alfresco-mmt.jar" "licenses/*" "web-server/*" -d "${BUNDLE_DIR}"
 
 # Extract Tomcat package files
 case "$BUNDLE_PKG" in
@@ -82,7 +111,7 @@ case "$BUNDLE_PKG" in
       unzip -q "${MYSQL_PKG_WINDOWS}" -d "${BUNDLE_DIR}" $MYSQL_FILES_WINDOWS
       mv "${BUNDLE_DIR}"/mysql-* "${BUNDLE_DIR}/mysql"
     else
-      echo "Not adding MySQL to bundle. File '${MYSQL_PKG_WINDOWS}' not found."
+      echo "WARNING: Not adding MySQL to bundle. File '${MYSQL_PKG_WINDOWS}' not found."
     fi
     ;;
   *.tar.gz)
@@ -93,7 +122,7 @@ case "$BUNDLE_PKG" in
       tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/scripts' '*/share'
       mv "${BUNDLE_DIR}"/mysql-* "${BUNDLE_DIR}/mysql"
     else
-      echo "Not adding MySQL to bundle. File '${MYSQL_PKG_LINUX}' not found."
+      echo "WARNING: Not adding MySQL to bundle. File '${MYSQL_PKG_LINUX}' not found."
     fi
     ;;
   *)

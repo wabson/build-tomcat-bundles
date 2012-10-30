@@ -135,21 +135,7 @@ cp -rf "${BUNDLE_DIR}/web-server/"* "${BUNDLE_DIR}/tomcat"
 rm -rf "${BUNDLE_DIR}/web-server"
 
 # Add extra files and directories
-case "$BUNDLE_PKG" in
-  *.zip)
-    cp -pr bundle-files/windows/* "${BUNDLE_DIR}"
-    ;;
-  *.tar.gz)
-    if [ "$PLATFORM" == "linux" ]; then
-      cp -pr bundle-files/linux/* "${BUNDLE_DIR}"
-    elif [ "$PLATFORM" == "osx" ]; then
-      cp -pr bundle-files/macos/* "${BUNDLE_DIR}"
-    fi
-    ;;
-  *)
-    echo "Unsupported archive format"
-    ;;
-esac
+cp -pr bundle-files/$PLATFORM/* "${BUNDLE_DIR}"
 
 # Package up the archive
 echo "Creating archive '${BUNDLE_PKG}'"

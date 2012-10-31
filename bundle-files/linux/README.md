@@ -102,7 +102,7 @@ add a line such as the following
 
     export ALFRESCO_OPTS="-Dcifs.enabled=false -Dftp.port=2121 -Dooo.exe=/usr/lib/libreoffice/program/soffice -Dimg.root=/usr -Dswf.exe=pdf2swf -Dffmpeg.exe=/usr/local/bin/ffmpeg"
 
-Alternative you may change repository settings by renaming the file `tomcat/shared/classes/alfresco-global.properties.sample',
+Alternative you may change repository settings by renaming the file `tomcat/shared/classes/alfresco-global.properties.sample`,
 e.g.
 
     mv tomcat/shared/classes/alfresco-global.properties.sample tomcat/shared/classes/alfresco-global.properties

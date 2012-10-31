@@ -133,7 +133,7 @@ Or, to run this on a directory other than the current location,
     ./bin/tomcat-sep.sh <alfresco_install_dir>
 
 This will copy your Tomcat instance into a new directory named `tomcat-app`,
-before copying the Share WAR files into it.
+before moving the Share WAR files into it.
 
 Once the `tomcat-app` directory is created, you can use the shell script 
 `share.sh` to manage it

@@ -20,11 +20,70 @@ Installation
 Use an archive extractor to extract the files to a directory of your choice.
 
 The files will be extracted to a new directory named according to the version,
-e.g. 'alfresco-community-4.2.a'. If you are likely to have multiple copies of 
+e.g. `alfresco-community-4.2.a`. If you are likely to have multiple copies of 
 the same version you will want to rename this.
 
 Usage
 -----
 
-TODO
+To start Alfresco, use the `alf_start.bat` script. This will start up both
+Alfresco and MySQL, each in its own terminal window which you can use to 
+monitor the application.
 
+Once started up, the Share application can be accessed by navigating to
+the location `http://<servername>:8080/share` in a web browser.
+
+To stop and restart Alfresco, use the `alf-stop.bat` and `restart_alf.bat` 
+scripts. These scripts will operate both Alfresco and MySQL.
+
+AMP files can be installed into the repository or Share WAR files by placing 
+them into the appropriate subdirectory in the amps directory. Then, use the 
+`apply_amps.bat` script to install the files.
+
+Customising Repository Settings
+-------------------------------
+
+You may set up any custom repository settings via the `ALFRESCO_OPTS` environment
+variable. These options are automatically passed to Alfresco upon startup and
+this method has the advantage that you need only configure your settings once,
+which will then apply to all the Tomcat bundle instances on your system.
+
+Alternative you may change repository settings by renaming the file `tomcat/shared/classes/alfresco-global.properties.sample`,
+to remove the `.sample` suffix. Inside the file you can then set any 
+required properties.
+
+Note that if you use both methods, the settings specified in `ALFRESCO_OPTS` will take priority.
+
+Development Environment Setup
+-----------------------------
+
+The default installation is designed to be as small as possible, to start up
+and shut down quickly and to perform reasonably well. This means running the
+repository and Share in a single Tomcat, configured with production settings.
+
+However, if you are using your installation to develop and test Alfresco
+add-ons or customisations you can benefit by moving to a dual-Tomcat setup,
+with Share installed in a second Tomcat instance.
+
+To switch your installation to this dual setup, first make sure Alfresco is
+not running and then use the `bin\tomcat-sep.bat` script to copy the Tomcat 
+instance.
+
+This will copy your Tomcat instance into a new directory named `tomcat-app`,
+before moving the Share WAR files into it.
+
+To start up Share, use the script `tomcat-app\bin\startup.bat`
+
+Once started up, the Share application can be accessed by navigating to
+the location `http://<servername>:8081/share` in a web browser.
+
+To shutdown Share, use the script `tomcat-app\bin\shutdown.bat`
+
+To restart Share, first shutdown and then start Share.
+
+If you are deploying code for testing and debugging then you may wish to use
+the `share-config-custom.xml.dev.sample` supplied inside Tomcat's `shared/classes`
+directory. This will turn on Share's client debug mode and switch the Surf
+framework into `development` mode.
+
+To apply these setting simply rename the file to remove the `.dev.sample` suffix.

@@ -35,6 +35,9 @@ To start Tomcat and MySQL, type the following at the command line
 
     ./alfresco.sh start
 
+Once started up, the Share application can be accessed by navigating to 
+the location `http://<servername>:8080/share` in a web browser.
+
 You can start Tomcat or MySQL individually using the `start-tomcat` and 
 `start-mysql` options.
 
@@ -138,6 +141,9 @@ Once the `tomcat-app` directory is created, you can use the shell script
 To start up Share, type
 
     ./share.sh start
+
+Once started up, the Share application can be accessed by navigating to 
+the location `http://<servername>:8081/share` in a web browser.
 
 To stop Share, type
 

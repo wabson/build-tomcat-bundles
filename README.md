@@ -12,10 +12,10 @@ different configurations such as installing Solr support and additional
 options for developers.
 
 You can download the bundles for recent version of Alfresco from 
-[Will's blog]().
+[Will's blog](http://blogs.alfresco.com/wp/wabson/alfresco-tomcat-bundles/).
 
-Or, for more information on what the bundles provide, check out the README
-for the relevant platform
+Or, for more information on what the bundles provide and how to use them, 
+check out the README for the relevant platform
 
  * [Linux](/wabson/build-tomcat-bundles/blob/master/bundle-files/linux/README.md)
  * [Mac OS X](/wabson/build-tomcat-bundles/blob/master/bundle-files/osx/README.md)
@@ -33,7 +33,7 @@ as the name of the Tomcat bundle package to create. The third parameter is
 the target platform, one of `linux`, `osx` or `win32`.
 
     ./make-tomcat-bundle.sh alfresco-community-4.2.a.zip alfresco-community-tomcat-4.2.a-linux-i686.tar.gz linux
-    ./make-tomcat-bundle.sh alfresco-community-4.2.a.zip alfresco-community-tomcat-4.2.a-osx-x64.tar.gz osx
+    ./make-tomcat-bundle.sh alfresco-community-4.2.a.zip alfresco-community-tomcat-4.2.a-osx-x86_64.tar.gz osx
     ./make-tomcat-bundle.sh alfresco-community-4.2.a.zip alfresco-community-tomcat-4.2.a-win32.tar.gz win32
 
 Contributing

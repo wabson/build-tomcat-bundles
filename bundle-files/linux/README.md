@@ -86,6 +86,28 @@ If you wish to be more specific about which files are installed, you may use
 the `install-amps-alfresco` or `install-amps-share` commands instead to install
 just the repository or just the Share AMPs, respectively.
 
+Customising Repository Settings
+-------------------------------
+
+You may set up any custom repository settings via the `ALFRESCO_OPTS` environment
+variable. These options are automatically passed to Alfresco upon startup and
+this method has the advantage that you need only configure your settings once,
+which will then apply to all the Tomcat bundle instances on your system.
+
+This usually means editing your `.bash_profile` file in your home directory to
+add a line such as the following
+
+    export ALFRESCO_OPTS="-Dcifs.enabled=false -Dftp.port=2121 -Dooo.exe=/usr/lib/libreoffice/program/soffice -Dimg.root=/usr -Dswf.exe=pdf2swf -Dffmpeg.exe=/usr/local/bin/ffmpeg"
+
+Alternative you may change repository settings by renaming the file `tomcat/shared/classes/alfresco-global.properties.sample',
+e.g.
+
+    mv tomcat/shared/classes/alfresco-global.properties.sample tomcat/shared/classes/alfresco-global.properties
+
+and then setting any properties required.
+
+Note that if you use both methods, the settings specified in `ALFRESCO_OPTS` will take priority.
+
 Development Environment Setup
 -----------------------------
 

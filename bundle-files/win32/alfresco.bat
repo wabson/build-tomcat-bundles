@@ -5,7 +5,8 @@ rem ---------------------------------------------------------------------------
 
 rem set Alfresco home (includes trailing \  e.g. c:\alfresco\)
 set ALF_HOME=%~dps0
-set ALF_DATA_HOME=%ALF_HOME%alf_data
+set ALF_DATA_HOME=%ALF_HOME%data
+set SOLR_HOME=%ALF_HOME%solr
 set CATALINA_HOME=%ALF_HOME%tomcat
 set CATALINA_PID=%CATALINA_HOME%\tomcat.pid
 
@@ -23,6 +24,9 @@ rem Set any default JVM options
 set JAVA_OPTS=-Xms512m -Xmx1024m -Xss1024k -XX:MaxPermSize=256m -XX:NewSize=256m -server
 set JAVA_OPTS=%JAVA_OPTS% -Dalfresco.home=%ALF_HOME% -Dcom.sun.management.jmxremote=true
 set JAVA_OPTS=%JAVA_OPTS% -Ddir.root=%ALF_DATA_HOME% -Dimg.root=.
+if exist "%SOLR_HOME%" set JAVA_OPTS=%JAVA_OPTS% -Dindex.subsystem.name=solr -Ddir.keystore=${dir.root}/keystore -Dsun.security.ssl.allowUnsafeRenegotiation=true
+set JAVA_OPTS=%JAVA_OPTS% %ALFRESCO_OPTS%
+rem Set database properties
 if not exist "%MYSQL_HOME%" goto postgres
 set JAVA_OPTS=%JAVA_OPTS% -Ddb.driver=org.gjt.mm.mysql.Driver -Ddb.url=jdbc:mysql://localhost:%MYSQL_PORT%/%MYSQL_DB% -Ddb.username=%MYSQL_USER% -Ddb.password=%MYSQL_PASS%
 :postgres

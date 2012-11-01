@@ -33,12 +33,21 @@ monitor the application.
 Once started up, the Share application can be accessed by navigating to
 the location `http://<servername>:8080/share` in a web browser.
 
+MySQL will start up using port 33061, to avoid conflicts with any existing
+MySQL installations you may have.
+
 To stop and restart Alfresco, use the `alf-stop.bat` and `restart_alf.bat` 
 scripts. These scripts will operate both Alfresco and MySQL.
 
 AMP files can be installed into the repository or Share WAR files by placing 
 them into the appropriate subdirectory in the amps directory. Then, use the 
 `apply_amps.bat` script to install the files.
+
+### Wiping the Repository ###
+
+You can return to an initial state by stopping Alfresco and removing the `data`
+directory. When the application next starts up it will re-create a blank 
+database and bootstrap the repository.
 
 Customising Repository Settings
 -------------------------------

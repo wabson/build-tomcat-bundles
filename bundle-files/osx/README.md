@@ -38,6 +38,9 @@ To start Tomcat and MySQL, type the following at the command line
 Once started up, the Share application can be accessed by navigating to 
 the location `http://<servername>:8080/share` in a web browser.
 
+MySQL will start up using port 33061, to avoid conflicts with any existing
+MySQL installations you may have.
+
 You can start Tomcat or MySQL individually using the `start-tomcat` and 
 `start-mysql` options.
 
@@ -89,6 +92,12 @@ command to install the files
 If you wish to be more specific about which files are installed, you may use 
 the `install-amps-alfresco` or `install-amps-share` sub-commands instead to install
 just the repository or just the Share AMPs, respectively.
+
+### Wiping the Repository ###
+
+You can return to an initial state by stopping Alfresco and removing the `data`
+directory. When the application next starts up it will re-create a blank 
+database and bootstrap the repository.
 
 Customising Repository Settings
 -------------------------------

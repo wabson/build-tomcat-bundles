@@ -16,8 +16,7 @@ if [ ! -d "$alfdir/tomcat-app" ]; then
   test -f "$alfdir/tomcat-app/conf/Catalina/localhost/solr.xml" && rm "$alfdir/tomcat-app/conf/Catalina/localhost/solr.xml"
   test -f "$alfdir/tomcat-app/conf/Catalina/localhost/alfresco.xml" && rm "$alfdir/tomcat-app/conf/Catalina/localhost/alfresco.xml"
   # Configure ports
-  sed -i ".bak" -e "s/8005/8006/" -e "s/8080/8081/" -e "s/8443/8444/" "$alfdir/tomcat-app/conf/server.xml"
-  sed -i ".bak" -e "s/8080/8081/" "$alfdir/tomcat-app/conf/server.xml"
+  sed -i ".bak" -e "s/8005/8006/" -e "s/8080/8081/" -e "s/8443/8444/" -e "s/8009/8010/" "$alfdir/tomcat-app/conf/server.xml"
   # Share startup script
   cp -pr "$alfdir/bin/share.sh" "$alfdir"
 else

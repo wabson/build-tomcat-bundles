@@ -75,7 +75,7 @@ if [ -e "${BUNDLE_PKG}" ]; then
   exit 1
 fi
 
-if [ ! -f "${WAR_PKG}" ]; then
+if [ ! -e "${WAR_PKG}" ]; then
   echo "WAR package '${WAR_PKG}' does not exist"
   exit 1
 fi
@@ -83,56 +83,68 @@ fi
 # Create required directories
 mkdir -p "${BUNDLE_DIR}"
 
-# Extract files from WAR bundle
-echo "Extracting files from WAR bundle ${WAR_PKG}"
-unzip -q "${WAR_PKG}" "bin/alfresco-mmt.jar" "licenses/*" "web-server/*" -d "${BUNDLE_DIR}"
-
 # Extract Tomcat package files
-case "$BUNDLE_PKG" in
-  *.zip)
+case "$PLATFORM" in
+  win32)
     echo "Extracting Tomcat files from ${TOMCAT_PKG_ZIP}"
     unzip -q "${TOMCAT_PKG_ZIP}" -x '*/webapps/docs/*' '*/webapps/examples/*' '*/webapps/host-manager/*' '*/webapps/manager/*' -d "${BUNDLE_DIR}"
     ;;
-  *.tar.gz)
+  linux | osx)
     echo "Extracting Tomcat files from ${TOMCAT_PKG_TAR}"
     tar -xzf "${TOMCAT_PKG_TAR}" -C "${BUNDLE_DIR}" --exclude='*/webapps/docs' --exclude='*/webapps/examples' --exclude='*/webapps/host-manager' --exclude='*/webapps/manager'
     ;;
   *)
-    echo "Unsupported archive format"
+    echo "Unsupported platform"
     ;;
 esac
 mv "${BUNDLE_DIR}"/apache-tomcat-* "${BUNDLE_DIR}/tomcat"
 
-# Extract MySQL files. Only the files required to run mysqld and bootstrap the alfresco database are copied over.
-case "$BUNDLE_PKG" in
-  *.zip)
-    if [ -f "${MYSQL_PKG_WINDOWS}" ]; then
-      echo "Adding MySQL files from ${MYSQL_PKG_WINDOWS}"
-      unzip -q "${MYSQL_PKG_WINDOWS}" -d "${BUNDLE_DIR}" $MYSQL_FILES_WINDOWS
-      mv "${BUNDLE_DIR}"/mysql-* "${BUNDLE_DIR}/mysql"
-    else
-      echo "WARNING: Not adding MySQL to bundle. File '${MYSQL_PKG_WINDOWS}' not found."
-    fi
-    ;;
-  *.tar.gz)
-    if [ -f "${MYSQL_PKG_LINUX}" ]; then
-      echo "Adding MySQL files from ${MYSQL_PKG_LINUX}"
-      #tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" --wildcards '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/lib' '*/scripts' '*/share' '*/support-files' --exclude='*/lib/*.a' --exclude='*/lib/.la'
-      #tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" --wildcards --no-wildcards-match-slash '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/scripts' '*/share' --exclude='**/*.a' --exclude='**/*.la'
-      tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/scripts' '*/share'
-      mv "${BUNDLE_DIR}"/mysql-* "${BUNDLE_DIR}/mysql"
-    else
-      echo "WARNING: Not adding MySQL to bundle. File '${MYSQL_PKG_LINUX}' not found."
-    fi
-    ;;
-  *)
-    echo "Unsupported archive format"
-    ;;
-esac
+if [ -f "${WAR_PKG}" ]; then
+  # Extract files from WAR bundle
+  echo "Extracting files from WAR bundle ${WAR_PKG}"
+  unzip -q "${WAR_PKG}" "bin/alfresco-mmt.jar" "licenses/*" "web-server/*" -d "${BUNDLE_DIR}"
 
-# Add additional files to Tomcat from web-server directory in WAR bundle
-cp -rf "${BUNDLE_DIR}/web-server/"* "${BUNDLE_DIR}/tomcat"
-rm -rf "${BUNDLE_DIR}/web-server"
+  # Add additional files to Tomcat from web-server directory in WAR bundle
+  test ! -d "${BUNDLE_DIR}/web-server" && echo "Required web-server directory not found in source file" && exit 1
+  test ! -d "${BUNDLE_DIR}/web-server/webapps" && echo "Required web-server/webapps directory not found in source file" && exit 1
+  cp -pr "${BUNDLE_DIR}/web-server/"* "${BUNDLE_DIR}/tomcat"
+  rmdir "${BUNDLE_DIR}/web-server"
+elif [ -d "${WAR_PKG}" ]; then
+  test ! -d "${WAR_PKG}/webapps" && echo "Required webapps directory not found in source directory" && exit 1
+  cp -pr "${WAR_PKG}/"* "${BUNDLE_DIR}/tomcat"
+else
+  echo "Missing or bad source file/directory '${WAR_PKG}'"
+  exit 1
+fi
+
+if [ ! "$4" == "--nomysql" ]; then
+  # Extract MySQL files. Only the files required to run mysqld and bootstrap the alfresco database are copied over.
+  case "$PLATFORM" in
+    win32)
+      if [ -f "${MYSQL_PKG_WINDOWS}" ]; then
+        echo "Adding MySQL files from ${MYSQL_PKG_WINDOWS}"
+        unzip -q "${MYSQL_PKG_WINDOWS}" -d "${BUNDLE_DIR}" $MYSQL_FILES_WINDOWS
+        mv "${BUNDLE_DIR}"/mysql-* "${BUNDLE_DIR}/mysql"
+      else
+        echo "WARNING: Not adding MySQL to bundle. File '${MYSQL_PKG_WINDOWS}' not found."
+      fi
+      ;;
+    linux | osx)
+      if [ -f "${MYSQL_PKG_LINUX}" ]; then
+        echo "Adding MySQL files from ${MYSQL_PKG_LINUX}"
+        #tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" --wildcards '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/lib' '*/scripts' '*/share' '*/support-files' --exclude='*/lib/*.a' --exclude='*/lib/.la'
+        #tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" --wildcards --no-wildcards-match-slash '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/scripts' '*/share' --exclude='**/*.a' --exclude='**/*.la'
+        tar -xzf "${MYSQL_PKG_LINUX}" -C "${BUNDLE_DIR}" '*/bin/mysqld' '*/bin/mysqld_safe' '*/bin/mysql' '*/bin/my_print_defaults' '*/bin/resolveip' '*/scripts' '*/share'
+        mv "${BUNDLE_DIR}"/mysql-* "${BUNDLE_DIR}/mysql"
+      else
+      echo "WARNING: Not adding MySQL to bundle. File '${MYSQL_PKG_LINUX}' not found."
+      fi
+      ;;
+    *)
+      echo "Unsupported archive format"
+      ;;
+  esac
+fi
 
 # Add extra files and directories
 cp -pr bundle-files/$PLATFORM/* "${BUNDLE_DIR}"

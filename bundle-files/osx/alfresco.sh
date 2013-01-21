@@ -32,6 +32,10 @@ MYSQL_SOCK="${MYSQL_HOME}/mysql.sock"
 MYSQL_TMP_DIR="${MYSQL_HOME}/tmp"
 MYSQL_USER="admin"
 MYSQL_PASS="admin"
+PG_DATA_DIR="${ALF_DATA_HOME}/postgres"
+PG_PORT=54321
+PG_USER="admin"
+PG_PASS="admin"
 
 # Port that MySQL should listen on
 MYSQL_PORT="33061"
@@ -47,6 +51,8 @@ export JAVA_OPTS="${JAVA_OPTS} ${ALFRESCO_OPTS}"
 # Set database properties
 if [ -d "${MYSQL_HOME}" ]; then
   export JAVA_OPTS="${JAVA_OPTS} -Ddb.driver=org.gjt.mm.mysql.Driver -Ddb.url=jdbc:mysql://localhost:${MYSQL_PORT}/alfresco -Ddb.username=${MYSQL_USER} -Ddb.password=${MYSQL_PASS}"
+elif [ -d "${PG_DATA_DIR}" ]; then
+  export JAVA_OPTS="${JAVA_OPTS} -Ddb.driver=org.postgresql.Driver -Ddb.url=jdbc:postgresql://localhost:${PG_PORT}/alfresco -Ddb.username=${PG_USER} -Ddb.password=${PG_PASS}"
 fi
 
 # Set default Tomcat values
@@ -61,10 +67,8 @@ export MAGICK_HOME="/usr/local"
 # Start Tomcat and MySQL if present
 function start_all {
   prepare
-  if [ -d "$MYSQL_HOME" ]; then
-    echo "Starting MySQL"
-    mysql_start
-  fi
+  echo "Starting Database"
+  db_start
   echo "Starting Tomcat"
   tomcat_start "$@"
 }
@@ -73,10 +77,8 @@ function start_all {
 function stop_all {
   echo "Stopping Tomcat"
   tomcat_stop
-  if [ -d "${MYSQL_HOME}" -a -f "${MYSQL_PID}" ]; then
-    echo "Stopping MySQL"
-    mysql_stop
-  fi
+  echo "Stopping Database"
+  db_stop
 }
 
 # Restart Tomcat and MySQL
@@ -150,6 +152,38 @@ function mysql_start {
     fi
   else
     echo "MySQL is already started"
+  fi
+}
+
+function pg_start {
+  # See http://willbryant.net/software/mac_os_x/postgres_initdb_fatal_shared_memory_error_on_leopard for problems with initdb on OSX
+  test ! -e "${PG_DATA_DIR}" && mkdir -p "${PG_DATA_DIR}"
+  test ! -e "${PG_DATA_DIR}/base" && initdb "${PG_DATA_DIR}"
+  pg_ctl -D "${PG_DATA_DIR}" -o "-p ${PG_PORT}" -l logfile start
+  sleep 1
+  test -z "`psql -p ${PG_PORT} -d postgres --list | grep '^ alfresco'`" && psql -p "${PG_PORT}" -d postgres -c "CREATE DATABASE alfresco;" && psql -p "${PG_PORT}" -d postgres -c "CREATE USER ${PG_USER} WITH PASSWORD '${PG_PASS}';" && psql -p "${PG_PORT}" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE alfresco to ${PG_USER};"
+}
+
+function db_start {
+  if [ ! -z "`which psql`" -a ! -z "`which pg_ctl`" ]; then
+    pg_start
+  elif [ -d "${MYSQL_HOME}" ]; then
+    mysql_start
+  else
+    echo "Could not find a database!"
+    exit 1
+  fi
+}
+
+function pg_stop {
+  pg_ctl -D "${PG_DATA_DIR}" -o "-p ${PG_PORT}" stop
+}
+
+function db_stop {
+  if [ -d "${PG_DATA_DIR}" ]; then
+    pg_stop
+  else
+    mysql_stop
   fi
 }
 
@@ -255,12 +289,16 @@ elif [ "$1" = "start-tomcat-jpda" ]; then
   tomcat_start jpda
 elif [ "$1" = "start-mysql" ]; then
   mysql_start
+elif [ "$1" = "start-db" ]; then
+  db_start
 elif [ "$1" = "stop" ]; then
   stop_all
 elif [ "$1" = "stop-tomcat" ]; then
   tomcat_stop
 elif [ "$1" = "stop-mysql" ]; then
   mysql_stop
+elif [ "$1" = "stop-db" ]; then
+  db_stop
 elif [ "$1" = "restart" ]; then
   restart_all
 elif [ "$1" = "restart-tomcat" ]; then

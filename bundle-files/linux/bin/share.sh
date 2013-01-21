@@ -11,7 +11,7 @@ elif [ "$1" = "stop" ]; then
   $catalina stop
 elif [ "$1" = "restart" ]; then
   $catalina stop
-  wait 1
+  sleep 1
   $catalina start
 else
   echo "Usage: $0 start|stop|restart|start-jpda"
